@@ -1,6 +1,6 @@
 # Native Android architecture
 
-Static Compose-first UI audit (2026-11-11): [screen inventory and migration decision](../../docs/android_compose_audit_2026-11-11.md). The existing screens already use Compose; physical usability and device acceptance remain open.
+Static Compose-first UI audit (2026-11-11): screen inventory from the earlier project. The existing screens already use Compose; physical usability and device acceptance remain open.
 
 ## Modules and dependency direction
 

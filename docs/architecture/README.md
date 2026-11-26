@@ -8,6 +8,6 @@
 - [ADR](../adr/README.md) przechowują uzasadnienia konkretnych decyzji.
 - [Model zagrożeń](../security/threat-model.md) rozdziela ryzyka od potwierdzonych kontroli.
 
-**Etap scaffold:** dokumenty są mapą zagadnień, a nie opisem gotowej implementacji. Przy pierwszym module zastąp opisy planistyczne faktami, referencjami do kodu i testów. Usuń nieaktualne elementy zamiast tworzyć nowe kopie sekcji.
+**Etap development:** opis dotyczy istniejącego kodu Android. Walidacja urządzeń pozostaje odrębną bramką.
 
 Standard aktualizacji i budżety znaków: [Dokumentacja](../documentation.md).

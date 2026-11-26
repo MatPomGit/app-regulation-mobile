@@ -10,4 +10,4 @@ The project uses five product flavors mapped one-to-one to the five active ARC-A
 
 Feature selection is compile-time and available through `core/StudyVariant.kt`. Companion features are not runtime toggles in the research build.
 
-Full scientific mapping: `../../docs/android_article_variants.md`.
+Scientific mapping: MSC-ADHD-P01, P02, P03 and P05 in ARC-NEURO; MSC-ADHD-P04 in ARC-XR.

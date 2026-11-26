@@ -1,6 +1,6 @@
 # Zarządzanie projektem
 
-**Etap:** szablon, bez oddelegowanych maintainerów. Po utworzeniu konkretnej aplikacji zaktualizuj podział odpowiedzialności i zatwierdzanie zmian.
+**Etap:** development. Właściciel naukowy i podstawowy autor: Mateusz Pomianek. Nie potwierdzono oddelegowanych maintainerów.
 
 ## Role i decyzje
 

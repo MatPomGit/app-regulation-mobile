@@ -1,21 +1,5 @@
-# ADR-0001: kanoniczny właściciel komponentu
+# ADR-0001: własność kodu aplikacji
 
-**Status:** proposed  
-**Data:** 2026-11-19  
-**Kategoria:** ownership, compatibility
+**Status:** accepted (migracja źródeł), 2026-11-26.
 
-## Kontekst
-
-Projekt `app-*` powinien przechowywać własny kod i publiczny kontrakt. Odbiorcy `msc-*` i `lib-*` wymagają stabilnych, odtwarzalnych wersji.
-
-## Propozycja decyzji
-
-Repozytorium aplikacji jest właścicielem kodu i kontraktów. Repozytoria manuskryptowe korzystają z wersjonowanych wydań albo przypiętego SHA zamiast kopiować implementację.
-
-## Alternatywy
-
-Kopiowanie źródeł do każdego odbiorcy upraszcza start, ale prowadzi do rozbieżności implementacji i trudnej kontroli bezpieczeństwa.
-
-## Konsekwencje i odbiór
-
-Potrzebne są testy zgodności kontraktów, kontrola wersji zależności i zgodność z [ARCHITECTURE.md](../../ARCHITECTURE.md). `proposed` nie oznacza, że zależności produkcyjne zostały już skonfigurowane. Przed zmianą statusu właściciel weryfikuje realnych odbiorców i akceptuje decyzję.
+APP-REGULATION-MOBILE jest kanonicznym miejscem rozwoju projektu Android po scaleniu PR #1. Badania MSC korzystają z przypiętych wersji lub SHA, a nie z kopii źródeł. Wydzielenie bibliotek jest osobnym zadaniem. Alternatywa: wielokrotne kopie kodu, odrzucone z powodu rozbieżności. Odbiór techniczny i usunięcie źródła wymagają osobnych dowodów CI; nie oznacza to zatwierdzonego wydania.

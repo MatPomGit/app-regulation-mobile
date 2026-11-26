@@ -1,6 +1,6 @@
 # Obsługa incydentów bezpieczeństwa
 
-**Stan: procedura bazowa, nieuruchomiona usługa dyżurowa.** Kanał zgłoszeń i odpowiedzialne osoby wskazuje [SECURITY.md](../../SECURITY.md); w szablonie kontakt nie został jeszcze skonfigurowany.
+**Stan: procedura bazowa, nieuruchomiona usługa dyżurowa.** Kanał zgłoszeń i odpowiedzialne osoby wskazuje [SECURITY.md](../../SECURITY.md); prywatny kanał nie został jeszcze zweryfikowany.
 
 ## Kroki po stwierdzeniu podejrzenia incydentu
 
