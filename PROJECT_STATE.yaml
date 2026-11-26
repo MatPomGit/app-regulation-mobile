@@ -1,18 +1,19 @@
 schema_version: 1
 template_version: "1.0.0"
 repository_type: app
-component_id: REPLACE_COMPONENT_ID
-programme: null
-owner: REPLACE_OWNER
-updated: null
-lifecycle: scaffold
+component_id: app-regulation-mobile
+programme: ARC-ADHD
+owner: Mateusz Pomianek
+updated: "2026-11-26"
+lifecycle: development
 evidence_status: not_run
-device_validation_status: not_applicable
+device_validation_status: not_run
 pages_status: not_configured
 release_status: not_released
 source_version: 0.1.0
-next_action: configure_component_and_run_scaffold_validator
+next_action: validate_android_migration
 blockers:
-  - replace_template_metadata
-  - run_local_tests
-  - confirm_license_and_publication_rights
+  - exact_sha_gradle_tests
+  - device_validation
+  - independent_review
+  - release_gate

@@ -2,25 +2,30 @@
   "schema_version": 1,
   "template_version": "1.0.0",
   "type": "app",
-  "component_id": "REPLACE_APP_ID",
-  "display_name": "REPLACE_APP_TITLE",
+  "component_id": "app-regulation-mobile",
+  "display_name": "ARC Regulation Mobile",
   "version": "0.1.0",
-  "release_status": "scaffold",
-  "owner": "REPLACE_OWNER",
-  "license_spdx": "UNDECIDED",
-  "platforms": [],
-  "runtime": "REPLACE_RUNTIME",
-  "interface_types": [],
+  "release_status": "development",
+  "owner": "Mateusz Pomianek",
+  "license_spdx": "Apache-2.0",
+  "platforms": [
+    "android"
+  ],
+  "runtime": "Kotlin / Jetpack Compose / Android SDK 37",
+  "interface_types": [
+    "android-ui",
+    "local-sqlite"
+  ],
   "source_paths": [
-    "src"
+    "android"
   ],
   "export_contract": "contracts/events.schema.json",
   "equipment_refs": [],
   "hardware_required": false,
-  "data_classification": "unassessed",
-  "network_egress": "unassessed",
-  "repository_url": "REPLACE_REPOSITORY_URL",
-  "documentation_url": "REPLACE_DOCS_URL",
+  "data_classification": "engineering prototype; participant data not authorized",
+  "network_egress": "not verified; no participant upload authorized",
+  "repository_url": "https://github.com/MatPomGit/app-regulation-mobile",
+  "documentation_url": "https://github.com/MatPomGit/app-regulation-mobile/tree/main/docs",
   "dependency_lockfiles": [],
   "consumers": [],
   "related_msc_repositories": []

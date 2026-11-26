@@ -1,0 +1,46 @@
+package pl.edu.prz.arcadhd.ui
+
+/** Presentation labels only: event IDs and controller semantics remain unchanged. */
+val sessionEventLabels = mapOf(
+    "initialized" to "Uruchomienie kontrolera",
+    "fatal_error" to "Błąd uniemożliwiający kontynuację",
+    "configuration_loaded" to "Wczytanie konfiguracji",
+    "qualified_core" to "Urządzenie spełnia wymagania",
+    "qualified_with_fallbacks" to "Urządzenie wymaga rozwiązań zastępczych",
+    "not_qualified" to "Urządzenie nie spełnia wymagań",
+    "onboarding_complete" to "Zakończenie wprowadzenia opiekuna",
+    "tutorial_required" to "Przejście do instrukcji",
+    "ready_without_tutorial" to "Gotowość bez ponownej instrukcji",
+    "comprehension_met" to "Zrozumienie instrukcji",
+    "comprehension_not_met" to "Brak zrozumienia instrukcji",
+    "calibration_complete" to "Zakończenie kalibracji",
+    "calibration_not_met" to "Niespełnione kryterium kalibracji",
+    "challenge_candidate" to "Przygotowanie możliwego wyzwania",
+    "session_goal_complete" to "Zakończenie zadania",
+    "eligible" to "Dopuszczenie wyzwania",
+    "suppressed" to "Pominięcie wyzwania",
+    "challenge_delivered" to "Wykonanie wyzwania",
+    "pause_complete" to "Zakończenie przerwy regulacyjnej",
+    "orientation_complete" to "Zakończenie orientacji",
+    "strategy_selected" to "Wybór strategii",
+    "protocol_abort" to "Przerwanie zgodnie z protokołem",
+    "strategy_complete" to "Zakończenie strategii",
+    "criterion_stable" to "Spełnienie kryterium stabilnego powrotu",
+    "censor_limit_reached" to "Koniec okna obserwacji",
+    "required_data_invalid" to "Nieważne dane pomiarowe",
+    "measurement_context_changed" to "Zmiana warunków pomiaru",
+    "event_persisted" to "Zapisanie zdarzenia",
+    "persistence_failure" to "Błąd zapisu zdarzenia",
+    "continuation_allowed" to "Dopuszczenie dalszej pracy",
+    "continue_task" to "Powrót do zadania",
+    "resume" to "Jawne wznowienie",
+    "resume_valid" to "Wznowienie po sprawdzeniu przerwania",
+    "recovery_invalidated" to "Unieważnienie obserwacji powrotu",
+    "reflection_complete" to "Zakończenie podsumowania",
+    "stop" to "Zatrzymanie",
+    "pause" to "Pauza",
+    "technical_interrupt" to "Przerwanie techniczne",
+)
+
+fun sessionEventLabel(event: String): String =
+    sessionEventLabels[event] ?: "Nieznane zdarzenie techniczne"
