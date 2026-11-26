@@ -42,8 +42,14 @@ jobs:
           fi
           echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
-          "$manager" --sdk_root="$sdk" "platforms;android-37"
-          test -f "$sdk/platforms/android-37/android.jar"
+          # API 37 may be distributed through a preview channel.
+          # Keep the declared API level; never silently compile against an older SDK.
+          if [[ ! -f "$sdk/platforms/android-37/android.jar" ]]; then
+            "$manager" --sdk_root="$sdk" --list --channel=3 > "$RUNNER_TEMP/android-sdk-packages.txt"
+            grep -E 'platforms;android-|build-tools;' "$RUNNER_TEMP/android-sdk-packages.txt" || true
+            "$manager" --sdk_root="$sdk" --channel=3 "platforms;android-37"
+          fi
+          test -s "$sdk/platforms/android-37/android.jar"
       - name: Test, lint and build five engineering variants
         working-directory: android
         run: |
