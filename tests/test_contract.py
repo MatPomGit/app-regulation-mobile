@@ -27,13 +27,25 @@ class ContractTests(unittest.TestCase):
         )
         return destination
 
+    def scaffold_fixture(self, destination: Path) -> Path:
+        root = self.fixture(destination)
+        fixtures = json.loads((ROOT / "tests/fixtures/scaffold-metadata.json").read_text(encoding="utf-8"))
+        for path, content in fixtures.items():
+            (root / path).write_text(content, encoding="utf-8")
+        return root
+
     def test_scaffold_passes(self):
         self.assertEqual([], check(ROOT, "scaffold"))
 
     def test_release_remains_blocked_by_default(self):
         errors = check(ROOT, "release")
         self.assertIn("GATE BLOCKED: tests_executed", errors)
-        self.assertIn("LICENSE: placeholder or missing license text", errors)
+        self.assertIn("NOT_RELEASED: component not ready", errors)
+        self.assertIn("GATE BLOCKED: publisher_approved", errors)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.fixture(Path(tmp))
+            (root / "LICENSE").write_text("LICENSE UNDECIDED", encoding="utf-8")
+            self.assertIn("LICENSE: placeholder or missing license text", check(root, "release"))
 
     def test_missing_required_file_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -142,17 +154,13 @@ class ContractTests(unittest.TestCase):
         })
         config_path.write_text(json.dumps(comp), encoding="utf-8")
         citation_path = root / "CITATION.cff"
-        citation_path.write_text(
-            citation_path.read_text(encoding="utf-8")
-            .replace('title: "REPLACE_APP_TITLE"', 'title: "Example"'),
-            encoding="utf-8",
-        )
+        citation = yaml.safe_load(citation_path.read_text(encoding="utf-8"))
+        citation["title"] = "Example"
+        citation_path.write_text(yaml.safe_dump(citation), encoding="utf-8")
         state = root / "PROJECT_STATE.yaml"
-        state.write_text(state.read_text(encoding="utf-8")
-                         .replace("REPLACE_COMPONENT_ID", "app-example")
-                         .replace("REPLACE_OWNER", "Mateusz Pomianek")
-                         .replace("release_status: not_released", "release_status: ready"),
-                         encoding="utf-8")
+        metadata = yaml.safe_load(state.read_text(encoding="utf-8"))
+        metadata.update(component_id="app-example", owner="Mateusz Pomianek", release_status="ready")
+        state.write_text(yaml.safe_dump(metadata), encoding="utf-8")
         (root / "LICENSE").write_text(
             "MIT License\n\nCopyright 2026 Mateusz Pomianek\n\n"
             "Permission is hereby granted, free of charge, to any person obtaining a "
@@ -233,7 +241,7 @@ class ContractTests(unittest.TestCase):
     def test_initializer_idempotent_and_coherent(self):
         from init_app import initialise
         with tempfile.TemporaryDirectory() as tmp:
-            root = self.fixture(Path(tmp))
+            root = self.scaffold_fixture(Path(tmp))
             args = (root, "app-e4-fixture", "App E4 Fixture", "Mateusz Pomianek",
                     "https://github.com/MatPomGit/app-e4-fixture", "desktop", "Python 3.12")
             initialise(*args)
@@ -256,7 +264,7 @@ class ContractTests(unittest.TestCase):
         import os
         from init_app import initialise
         with tempfile.TemporaryDirectory() as tmp:
-            root = self.fixture(Path(tmp))
+            root = self.scaffold_fixture(Path(tmp))
             paths = (
                 "config/component.json", "PROJECT_STATE.yaml", "CITATION.cff",
                 "README.md", "mkdocs.yml", "pages/index.md",
@@ -288,7 +296,7 @@ class ContractTests(unittest.TestCase):
     def test_initializer_does_not_change_files_when_staging_fails(self):
         from init_app import initialise
         with tempfile.TemporaryDirectory() as tmp:
-            root = self.fixture(Path(tmp))
+            root = self.scaffold_fixture(Path(tmp))
             before = (root / "config/component.json").read_bytes()
             args = (root, "app-e4-staging", "App Stage", "Mateusz Pomianek",
                     "https://github.com/MatPomGit/app-e4-staging",
@@ -302,7 +310,7 @@ class ContractTests(unittest.TestCase):
     def test_initializer_does_not_overwrite_existing_component(self):
         from init_app import initialise
         with tempfile.TemporaryDirectory() as tmp:
-            root = self.fixture(Path(tmp))
+            root = self.scaffold_fixture(Path(tmp))
             args = (root, "app-first", "First", "Mateusz Pomianek",
                     "https://github.com/MatPomGit/app-first", "desktop", "Python 3.12")
             initialise(*args)
@@ -322,8 +330,9 @@ class ContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = self.fixture(Path(tmp))
             p = root / "CITATION.cff"
-            p.write_text(p.read_text(encoding="utf-8").replace(
-                'title: "REPLACE_APP_TITLE"', 'title: "Mismatched"'), encoding="utf-8")
+            metadata = yaml.safe_load(p.read_text(encoding="utf-8"))
+            metadata["title"] = "Mismatched"
+            p.write_text(yaml.safe_dump(metadata), encoding="utf-8")
             self.assertIn("CITATION: title/manifest mismatch", check(root))
 
     def test_release_unsupported_spdx_rejected(self):
@@ -402,7 +411,7 @@ class ContractTests(unittest.TestCase):
     def test_initializer_refuses_ready_project(self):
         from init_app import initialise
         with tempfile.TemporaryDirectory() as tmp:
-            root = self.fixture(Path(tmp))
+            root = self.scaffold_fixture(Path(tmp))
             args = (root, "app-fixture", "App Fixture", "Mateusz Pomianek",
                     "https://github.com/MatPomGit/app-fixture", "desktop", "Python 3.12")
             initialise(*args)
@@ -416,7 +425,7 @@ class ContractTests(unittest.TestCase):
     def test_initializer_rejects_markup_title_without_writing(self):
         from init_app import initialise
         with tempfile.TemporaryDirectory() as tmp:
-            root = self.fixture(Path(tmp))
+            root = self.scaffold_fixture(Path(tmp))
             before = (root / "pages/index.md").read_bytes()
             for title in ("<script>alert(1)</script>", "A [link](https://x.test)",
                           "A ![image](https://x.test)", "Markdown *emphasis*",
@@ -431,7 +440,7 @@ class ContractTests(unittest.TestCase):
     def test_initializer_rejects_multiline_title_without_writing(self):
         from init_app import initialise
         with tempfile.TemporaryDirectory() as tmp:
-            root = self.fixture(Path(tmp))
+            root = self.scaffold_fixture(Path(tmp))
             before = (root / "config/component.json").read_bytes()
             with self.assertRaisesRegex(ValueError, "single-line"):
                 initialise(root, "app-fixture", "Title\nInjected", "Mateusz Pomianek",

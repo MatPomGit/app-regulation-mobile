@@ -1,0 +1,35 @@
+name: Android engineering validation
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify exact revision
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.6.0'
+          cache-disabled: true
+      - name: Install declared Android SDK
+        run: sdkmanager "platforms;android-37"
+      - name: Test, lint and build five engineering variants
+        working-directory: android
+        run: |
+          gradle --no-daemon --stacktrace :app:testCoreDebugUnitTest :app:testFacialDebugUnitTest :app:testBilateralDebugUnitTest :app:testEmbodiedArDebugUnitTest :app:testEegDebugUnitTest :app:lintCoreDebug :app:lintFacialDebug :app:lintBilateralDebug :app:lintEmbodiedArDebug :app:lintEegDebug :app:assembleCoreDebug :app:assembleFacialDebug :app:assembleBilateralDebug :app:assembleEmbodiedArDebug :app:assembleEegDebug
