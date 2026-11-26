@@ -5,7 +5,7 @@
   "component_id": "app-regulation-mobile",
   "display_name": "ARC Regulation Mobile",
   "version": "0.1.0",
-  "release_status": "development",
+  "release_status": "not_released",
   "owner": "Mateusz Pomianek",
   "license_spdx": "Apache-2.0",
   "platforms": [

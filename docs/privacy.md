@@ -1,8 +1,5 @@
-# Prywatność, pochodzenie danych i aparatury
+# Prywatność
 
-Żadne rzeczywiste dane uczestników, nagrania, sekrety, zrzuty twarzy i wrażliwe wyniki nie należą do kodu Git.
-W `config/component.json` podaj klasę danych i informacje, czy komponent działa offline, czy wysyła dane na serwer.
-Rejestr urządzeń pomiarowych i kontraktów: `MatPomGit/research-autopilot/catalog/equipment/` i `docs/equipment/`.
-Rejestr komputerów i sieci: `MatPomGit/homeserver-infra/docs/infrastructure/network/`.
-Dla adapterów zachowaj `equipment_id`, typ/wersję SDK, jednostki, współrzędne, źródła timestampów, kalibrację, parametry i status pomiarowy.
-Numer seryjny jest właściwością kanonicznego, kontrolowanego rejestru; nie publikuj go w publicznej dokumentacji bez decyzji właściciela.
+Prototyp inżynierski, bez zgody na przetwarzanie danych uczestników. Dziennik SQLite jest lokalny, niezaszyfrowany; backup aplikacji wyłączony. Brak aktywnego transportu kolejki. Nie wprowadzaj rzeczywistych identyfikatorów, nagrań, obrazów twarzy ani sygnałów EEG. Nie publikuj plików bazy ani logów sesji.
+
+Retencja, wycofanie zgody, kontrolowane usuwanie, szyfrowanie i eksport badawczy pozostają bramkami przyszłej implementacji. Audyt ruchu sieciowego i testy urządzenia NOT_RUN. Szczegóły: [dziennik](../android/PERSISTENCE.md).

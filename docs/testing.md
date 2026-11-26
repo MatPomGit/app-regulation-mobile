@@ -1,6 +1,10 @@
+# Testy Android i repozytorium
+
+Workflow Android engineering validation instaluje SDK 37.0, sprawdza exact SHA i wykonuje testy JVM, lint oraz assembleDebug dla pięciu wariantów. Testy SQLite JDBC nie są testami Android SQLiteOpenHelper. Walidacja fizyczna NOT_RUN.
+
 # Testy i dowody
 
-**Walidacja szkieletu:** zainstaluj zależności w izolowanym środowisku i uruchom:
+**Walidacja strukturalna i kontraktowa:** zainstaluj zależności w izolowanym środowisku i uruchom:
 
 ```bash
 python -m pip install -r requirements-ci.txt

@@ -1,6 +1,5 @@
-# Interfejsy i eksport danych
+# Kontrakty
 
-Zdefiniuj transport: lokalny plik, CLI, REST/WebSocket/LSL, Bluetooth/USB, UPM lub plugin; nie obiecuj wsparcia bez testów.
-Dla pomiarów ustal monotoniczny timestamp źródłowy i UTC wall-clock, jednostki, układ współrzędnych, status kalibracji, etykietę jakości, identyfikator sesji (pseudonim) i wersję kontraktu.
-Syntetyczny przykład `examples/event.synthetic.json` waliduje tylko format, nie działanie sprzętu.
-Nie zapisuj surowych danych osobowych w logach i nie kopiuj kart urządzeń z Research Autopilot.
+Kanoniczny interfejs inżynierski stanowią typy `SessionController`, `SessionJournal`, `SessionJournalCodec` i `VariantModuleContract` w projekcie Android. Dziennik SQLite v2 zapisuje zdarzenia, checkpointy i ukończone próby. Kolejka nie ma aktywnego transportu. Reguły badawcze i format danych uczestników nie są zastępowane tym interfejsem.
+
+`contracts/events.schema.json` oraz `examples/event.synthetic.json` pozostają osobnym kontraktem referencyjnym szablonu, nie API eksportu aplikacji. Szczegóły: [persistence](../android/PERSISTENCE.md).
