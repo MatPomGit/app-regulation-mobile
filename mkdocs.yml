@@ -1,5 +1,5 @@
 # GitHub Pages: only explicitly curated public content, never docs/.
-site_name: "Aplikacja"
+site_name: "ARC Regulation Mobile"
 docs_dir: pages
 theme:
   name: mkdocs

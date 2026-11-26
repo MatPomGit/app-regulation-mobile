@@ -1,11 +1,9 @@
-# Instrukcja operacyjna (runbook)
+# Runbook deweloperski
 
-**Stan: NOT_CONFIGURED.** Ten plik nie opisuje działającego serwisu ani dostępu do hosta.
+1. Sprawdź dokładny SHA, JDK, Gradle i SDK zgodnie z [instalacją](../installation.md).
+2. Uruchom testy i lint właściwego wariantu w izolowanym środowisku.
+3. W razie błędu sprawdź log kompilacji, dostępność SDK i wersje zależności. Nie obchodź kontroli.
+4. Przy błędzie dziennika zachowaj bazę w kontrolowanym miejscu; nie resetuj ani nie publikuj danych. Dziennik blokuje dalsze zmiany po wykryciu niespójności.
+5. Rollback kodu przez zweryfikowany commit; nie przywracaj starszego schematu bazy bez testu migracji.
 
-## Po pierwszym uruchomieniu aplikacji
-
-Podaj zweryfikowane polecenia instalacji, uruchomienia i zatrzymania **jedynie na posiadanym lub zatwierdzonym środowisku**, identyfikator wersji, porty i logi bez danych wrażliwych. Opisz kryteria zdrowia aplikacji, typowe objawy usterek, diagnostykę tylko do odczytu, sposób backupu/odtworzenia, rollback, aktualizację zależności i właściciela kontaktu. Jeśli program jest aplikacją lokalną, nie twórz fikcyjnej procedury usługi systemowej.
-
-Przed każdą operacją modyfikującą środowisko sprawdź uprawnienia, właściwy SHA, izolację, możliwe działania uboczne i dostępność zasobów. Nie przerywaj obliczeń innych osób i nie udostępniaj prywatnych logów. Brak środowiska oznacza `NOT_RUN`.
-
-Zobacz [instalację](../installation.md), [wdrożenie](../architecture/deployment.md), [wydania](../releases.md) i [obsługę incydentów](../security/incident-response.md).
+Brak wdrożonej usługi i zweryfikowanej procedury fizycznej. [Testy](../testing.md).

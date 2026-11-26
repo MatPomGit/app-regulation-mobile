@@ -1,17 +1,7 @@
-# Przepływy i granice danych
+# Przepływy danych
 
-**Status: NOT_ASSESSED.** Wzorzec zawiera jedynie schemat syntetycznego zdarzenia; nie przetwarza danych uczestników.
+Wejście użytkownika → Compose → reduktor sesji → transakcja SQLite → zatwierdzony checkpoint → UI. Zdarzenie i rekord kolejki są zapisywane atomowo; ukończone próby inżynierskie mają osobną tabelę bez kolejki eksportu. Odtworzenie sprawdza sekwencje, identyfikatory, skróty i stan reduktora.
 
-## Opis wymagany dla aplikacji
+Dziennik używa monotonicznej domeny zegara oraz losowych identyfikatorów sesji. Brak transportu wywołującego API kolejki; brak dowodu pomiarowego ruchu sieciowego. Baza nie jest szyfrowana. Backup Android wyłączono w manifeście. Retencja, usuwanie i eksport uczestników nie są zatwierdzone.
 
-Po dodaniu pierwszej ścieżki I/O udokumentuj:
-
-1. Źródło danych, podstawę pozyskania, identyfikator urządzenia lub sesji i format wejściowy.
-2. Granicę zaufania pomiędzy użytkownikiem, procesem aplikacji, lokalnym dyskiem, siecią, serwerem i usługą zewnętrzną, o ile występują.
-3. Kolejne przekształcenia, walidację, jednostki, znaczniki czasu, retencję i odbiorców.
-4. Transport, szyfrowanie, autoryzację, zakres zgód i proces usuwania danych.
-5. Kontrakt eksportu wraz z wersją oraz dowodem testu bez danych rzeczywistych.
-
-Nie przypisuj gotowości istniejącym jedynie w projekcie przepływom. Jeżeli funkcja jest offline, potwierdź brak ruchu sieciowego w rzeczywistym teście, zamiast zakładać go na podstawie konfiguracji. Dane i metadane uczestników przechowuj poza publicznym repozytorium.
-
-Spójne źródła: [Kontrakty](../contracts.md), [Prywatność](../privacy.md), [Model zagrożeń](../security/threat-model.md).
+[Specyfikacja dziennika](../../android/PERSISTENCE.md) · [Prywatność](../privacy.md).

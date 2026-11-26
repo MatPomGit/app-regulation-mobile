@@ -1,0 +1,56 @@
+name: Android engineering validation
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify exact revision
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.6.0'
+          cache-disabled: true
+      - name: Install declared Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          manager="$(command -v sdkmanager || true)"
+          if [[ -z "$manager" ]]; then
+            manager="$(find "$sdk/cmdline-tools" -type f -path '*/bin/sdkmanager' -print 2>/dev/null | sort -V | tail -n 1 || true)"
+          fi
+          if [[ ! -x "$manager" ]]; then
+            echo "::error::Android command-line tools unavailable in $sdk"
+            exit 1
+          fi
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          # API 37 uses the explicit major.minor SDK package identifier.
+          # Keep the declared major API level and select its base minor revision.
+          if [[ ! -f "$sdk/platforms/android-37.0/android.jar" ]]; then
+            "$manager" --sdk_root="$sdk" --list --channel=0 > "$RUNNER_TEMP/android-sdk-packages.txt"
+            grep -E 'platforms;android-|build-tools;' "$RUNNER_TEMP/android-sdk-packages.txt" || true
+            "$manager" --sdk_root="$sdk" --channel=0 "platforms;android-37.0"
+          fi
+          test -s "$sdk/platforms/android-37.0/android.jar"
+      - name: Test, lint and build five engineering variants
+        working-directory: android
+        run: |
+          gradle --no-daemon --stacktrace :app:testCoreDebugUnitTest :app:testFacialDebugUnitTest :app:testBilateralDebugUnitTest :app:testEmbodiedArDebugUnitTest :app:testEegDebugUnitTest :app:lintCoreDebug :app:lintFacialDebug :app:lintBilateralDebug :app:lintEmbodiedArDebug :app:lintEegDebug :app:assembleCoreDebug :app:assembleFacialDebug :app:assembleBilateralDebug :app:assembleEmbodiedArDebug :app:assembleEegDebug

@@ -31,3 +31,10 @@ obj/
 node_modules/
 
 # Carefully review additional platform-specific ignores; never ignore required lockfiles.
+
+# Android local build and signing material
+.gradle/
+**/build/
+local.properties
+*.jks
+*.keystore

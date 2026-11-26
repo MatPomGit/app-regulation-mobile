@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- 2026-11-26: migracja projektu Android z pięcioma wariantami, licencją Apache-2.0, osobnym CI i dokumentacją architektury. Bez wydania i bez aktywacji badań.
+
 - 2026-11-20: wydzielono źródła GitHub Pages w `pages/` zamiast `docs/`, wprowadzono allowlistę i wykrywanie instrukcji agentowych oraz notatek redakcyjnych. Usunięto `CONTRIBUTING.md` i powiązane odsyłacze.
 
 - 2026-11-20: dodano strukturę architektury, Code of Conduct, governance i support, model zagrożeń, ADR bezpieczeństwa, runbook oraz politykę limitów znaków. Walidator dokumentacji z testami regresyjnymi jest częścią scaffold CI.

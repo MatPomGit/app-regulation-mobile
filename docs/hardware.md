@@ -1,5 +1,3 @@
-# Integracja sprzętowa i ograniczenia
+# Aparatura
 
-Gdy `hardware_required=false`, zanotuj `NOT_APPLICABLE`.
-Jeśli wymagana jest aparatura, powiąż `equipment_id` z kanonicznym katalogiem Research Autopilot; wskaż SDK, transport, tryb połączenia, identyfikator wersji oraz ograniczenia licencji i pomiarów.
-Opisz wykrywanie urządzenia, konfigurację, synchronizację, sprawdzenie i procedurę przerwania. Nie zakładaj, że wirtualne testy zastępują realny test urządzenia.
+Core jest przeznaczony dla urządzeń Android. Bilateral zawiera inżynierską implementację odtwarzania stereo. Facial, Embodied AR i EEG oznaczają zakresy badawcze, a nie potwierdzoną akwizycję. Nie potwierdzono kalibracji, synchronizacji, jakości sygnałów ani kompatybilności fizycznych urządzeń. Status: NOT_RUN. Nie uruchamiać badań uczestników bez kwalifikacji.
