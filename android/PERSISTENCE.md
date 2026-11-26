@@ -83,13 +83,13 @@ research export eligibility. The engineering trial table has no enqueue trigger
 and is intentionally absent from `journal_queue`. An
 uploader still requires frozen allowlists, typed participant mappings, recovery
 validators, authorization, server idempotency, retry/backoff and retention rules.
-The proposed participant schema in app/mobile-unity/Database/001_local_store.sql
+The separately maintained proposed participant schema
 is a separate design contract and has not been substituted by this database.
 
 ## Verification
 
 SessionJournalTest uses actual temporary SQLite files through a test-only JDBC
-adapter (org.xerial:sqlite-jdbc:3.53.4.0). Production uses Android SQLite and does
+adapter (org.xerial:sqlite-jdbc:3.54.1.0). Production uses Android SQLite and does
 not package JDBC. Tests cover file reopen, exact replay, rollback after checkpoint
 and trigger failures, identical/conflicting retries, partial receipts, rejected
 receipts, queue recovery, immutable events, missing records, sequence gaps,
@@ -99,7 +99,7 @@ terminal states and strict codec decoding. Trial persistence tests cover v1->v2
 migration, reopen durability, idempotent retries, sequence gaps, immutable rows
 and tamper detection.
 
-From app/mobile-android-kotlin:
+From android/:
 
     gradle :app:testCoreDebugUnitTest :app:assembleCoreDebug
 

@@ -1,6 +1,6 @@
 # Wydawanie aplikacji `app-*`
 
-**Stan szablonu: SCAFFOLD / NOT_RELEASED.** Zmiana kodu, zielony CI, poprawny `release-evidence.json` ani automatyczny `PASS` walidatora nie stanowią autoryzacji wydania. Wydanie aplikacji i osobna publikacja GitHub Pages mają **odrębne bramki**.
+**Stan aplikacji: DEVELOPMENT / NOT_RELEASED.** Zmiana kodu, zielony CI, poprawny `release-evidence.json` ani automatyczny `PASS` walidatora nie stanowią autoryzacji wydania. Wydanie aplikacji i osobna publikacja GitHub Pages mają **odrębne bramki**.
 
 ## 1. Wersjonowanie i tożsamość wydania
 
@@ -38,7 +38,7 @@ Stany `NOT_RUN`, `UNAVAILABLE`, `NOT_APPLICABLE` i `PASS` są różne; każde po
 5. Dla rzeczywistego wydania **oddzielnie** zweryfikuj zaufane pochodzenie artefaktu (np. GitHub artifact attestation z uprawnionego joba i sprawdzenie podpisu/claims, repozytorium, workflow, commit SHA oraz digestu), status wymaganych checks i recenzenta z innego konta. Brak zaufanej atestacji lub mechanizmu autoryzacji oznacz `PROVENANCE_UNVERIFIED` i **HOLD**, nie wymyślaj dowodów. Nie ufaj polom w samodzielnie wygenerowanym JSON jako atestacji.
 6. Dopiero po osobnym zatwierdzeniu utwórz tag, GitHub Release i właściwy kanał dystrybucji. Udostępnij sumy, minimalny changelog, kompatybilność, datę, SHA, instrukcje aktualizacji i znane ograniczenia. Sprawdź tożsamość pobranego artefaktu.
 
-**Uwaga techniczna:** testy pozytywne z atrapą `git_revision` są wyłącznie testami walidatora; nie stanowią rzeczywistego dowodu uruchomienia procesu release. Repozytorium szablonu nie wydaje pakietów i nie posiada automatycznego workflow publikacji.
+**Uwaga techniczna:** testy pozytywne z atrapą `git_revision` są wyłącznie testami walidatora; nie stanowią rzeczywistego dowodu uruchomienia procesu release. Repozytorium aplikacji nie wydaje jeszcze pakietów i nie posiada automatycznego workflow publikacji.
 
 ## 5. Dystrybucja, bezpieczeństwo i rollback
 

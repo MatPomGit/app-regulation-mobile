@@ -31,7 +31,7 @@ The project now contains a compile-time article-module contract plus dedicated s
 7. Add ARCore optional embodied/AR module.
 8. Add BLE/wearable adapters only after device-specific measurement contracts are frozen.
 
-Legacy Unity reference: `../mobile-unity/LEGACY.md`.
+Legacy Unity is outside this Android repository.
 
 ## Article build variants
 
@@ -43,11 +43,11 @@ The application has five compile-time flavors:
 - `embodiedAr` — Paper 4, core + embodied/AR boundary;
 - `eeg` — Paper 5, core + wearable EEG boundary.
 
-See `VARIANTS.md` and `../../docs/android_article_variants.md`.
+See [variant mapping](VARIANTS.md).
 
 ## APK builds
 
-GitHub Actions are manual-first on `main`; PR builds are not automatic. The Android Kotlin workflow checks Core unit tests and lint. Separate manual workflows can build APK/AAB for selected flavors. For an on-demand APK, use GitHub Actions -> `Build Android APK variants` -> `Run workflow` and select one flavor or `all`. The workflow emits installable APKs plus checksums and provenance as a short-lived 3-day Actions artifact. A `researchRelease` run requires explicit `versionCode` and `versionName` and records both values in `BUILD_INFO.txt`; this still does not establish participant readiness. After the exact APK has passed the device-acceptance gate, the same manual workflow can be rerun with `publish_prerelease=true` and an explicit `release_tag`. That path publishes the APK, checksums and provenance as a durable GitHub prerelease and removes the transient Actions artifact after successful publication.
+The Android engineering validation workflow checks all five debug variants on pull requests and main. No APK distribution workflow is configured in this repository.
 
 Local task examples:
 
@@ -72,12 +72,9 @@ app/src/eeg/           Paper 5 BLE/EEG descriptor
 
 Each flavor provides the same `CurrentArticleModule` symbol, so the selected APK can only see its own article-specific module at compile time.
 
-## Google Play internal publication
+## Distribution
 
-A separate manual workflow, `Publish ARC-ADHD to Google Play internal testing`, builds signed `researchRelease` Android App Bundles and publishes one selected flavor or all five to their matching Google Play package on the `internal` track.
-
-The workflow requires the `google-play-internal` GitHub environment plus research-signing secrets and a Play Developer API service-account JSON credential. See `../../docs/google_play_publication.md`.
-
+No Google Play publication workflow is configured. Signed distribution requires a separate release decision and verified artifacts.
 
 ## Timed Core Signal Gate engineering flow
 

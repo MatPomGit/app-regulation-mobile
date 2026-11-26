@@ -4,7 +4,7 @@ ADR zapisuje **dlaczego** wybrano rozwiązanie i jakie rozważono alternatywy. N
 
 | ADR | Temat | Stan |
 | --- | --- | --- |
-| [0001](0001-contract.md) | Kanoniczny właściciel komponentu | proposed |
+| [0001](0001-contract.md) | Kanoniczny właściciel komponentu | accepted |
 | [0002](0002-security-boundaries.md) | Granice bezpieczeństwa aplikacji | proposed |
 
 Każdy nowy rekord stosuje strukturę: **Kontekst, Status, Decyzja lub propozycja, Alternatywy, Konsekwencje, Dowody, Powiązane kontrakty, Data**. Statusy: `proposed`, `accepted`, `rejected`, `superseded`. Status `proposed` nie daje prawa do produkcyjnej zmiany.

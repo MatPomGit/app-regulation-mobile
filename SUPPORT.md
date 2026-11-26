@@ -1,6 +1,6 @@
 # Wsparcie użytkowników
 
-**Status:** kanały wsparcia nie zostały jeszcze uruchomione dla konkretnej aplikacji.
+**Status:** prototyp Android bez potwierdzonego wsparcia produkcyjnego.
 
 Po pierwszym działającym wydaniu opisz obsługiwane wersje, systemy operacyjne, sposób zgłaszania błędów, wymagane logi pozbawione danych wrażliwych i realne kanały kontaktu. Dla publicznych zgłoszeń można używać Issues repozytorium, o ile właściciel udostępnił i monitoruje ten kanał. Nie obiecuj czasu reakcji ani wsparcia sprzętowego bez potwierdzonego procesu.
 
