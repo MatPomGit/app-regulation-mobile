@@ -19,6 +19,8 @@ jobs:
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Verify generated session graph
+        run: python3 scripts/generate_kotlin_session_graph.py --check
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
