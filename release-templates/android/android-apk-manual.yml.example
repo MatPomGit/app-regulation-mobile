@@ -1,0 +1,297 @@
+name: Build Android APK variants
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "Article build to compile"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - core
+          - facial
+          - bilateral
+          - embodiedAr
+          - eeg
+      build_type:
+        description: "APK build type"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - researchRelease
+      version_code:
+        description: "Explicit Android versionCode; required for researchRelease"
+        required: false
+        default: ""
+        type: string
+      version_name:
+        description: "Explicit Android versionName; required for researchRelease"
+        required: false
+        default: ""
+        type: string
+      publish_prerelease:
+        description: "Publish accepted researchRelease as a durable GitHub prerelease"
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: "Release tag, e.g. android-v0.1.0-rc1; required when publishing"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: android-apk-${{ github.ref }}-${{ inputs.variant }}-${{ inputs.build_type }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ARC_ADHD_KEY_ALIAS: ${{ secrets.ARC_ADHD_RESEARCH_KEY_ALIAS }}
+      ARC_ADHD_STORE_PASSWORD: ${{ secrets.ARC_ADHD_RESEARCH_STORE_PASSWORD }}
+      ARC_ADHD_KEY_PASSWORD: ${{ secrets.ARC_ADHD_RESEARCH_KEY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "9.6.0"
+          cache-provider: basic
+
+      - name: Validate and export version metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_code="${{ inputs.version_code }}"
+          version_name="${{ inputs.version_name }}"
+
+          if [ "${{ inputs.build_type }}" = "researchRelease" ]; then
+            [ -n "$version_code" ] || {
+              echo "::error::version_code is required for researchRelease"
+              exit 2
+            }
+            [ -n "$version_name" ] || {
+              echo "::error::version_name is required for researchRelease"
+              exit 2
+            }
+          fi
+
+          if [ "${{ inputs.publish_prerelease }}" = "true" ]; then
+            [ "${{ inputs.build_type }}" = "researchRelease" ] || {
+              echo "::error::publish_prerelease requires build_type=researchRelease"
+              exit 2
+            }
+            [ -n "${{ inputs.release_tag }}" ] || {
+              echo "::error::release_tag is required when publish_prerelease=true"
+              exit 2
+            }
+          fi
+
+          version_code="${version_code:-1}"
+          version_name="${version_name:-0.1.0-dev}"
+
+          [[ "$version_code" =~ ^[1-9][0-9]*$ ]] || {
+            echo "::error::version_code must be a positive integer"
+            exit 2
+          }
+          [[ "$version_name" =~ ^[0-9A-Za-z][0-9A-Za-z._-]*$ ]] || {
+            echo "::error::version_name must use only letters, digits, dot, underscore or hyphen"
+            exit 2
+          }
+
+          echo "ARC_ADHD_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          echo "ARC_ADHD_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+
+      - name: Prepare research signing material
+        if: ${{ inputs.build_type == 'researchRelease' }}
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ARC_ADHD_RESEARCH_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in KEYSTORE_B64 ARC_ADHD_KEY_ALIAS ARC_ADHD_STORE_PASSWORD ARC_ADHD_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing required GitHub secret/environment value: $name"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 2
+          keystore_path="${RUNNER_TEMP}/arc-adhd-research.jks"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$keystore_path"
+          chmod 600 "$keystore_path"
+          echo "ARC_ADHD_KEYSTORE_PATH=$keystore_path" >> "$GITHUB_ENV"
+
+          keytool -list -keystore "$keystore_path"             -alias "$ARC_ADHD_KEY_ALIAS"             -storepass "$ARC_ADHD_STORE_PASSWORD"             -keypass "$ARC_ADHD_KEY_PASSWORD" >/dev/null
+
+      - name: Select Gradle tasks
+        id: select
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ inputs.build_type }}" in
+            debug) suffix="Debug" ;;
+            researchRelease) suffix="ResearchRelease" ;;
+            *) echo "Unsupported build type"; exit 2 ;;
+          esac
+
+          case "${{ inputs.variant }}" in
+            all) variants=(Core Facial Bilateral EmbodiedAr Eeg) ;;
+            core) variants=(Core) ;;
+            facial) variants=(Facial) ;;
+            bilateral) variants=(Bilateral) ;;
+            embodiedAr) variants=(EmbodiedAr) ;;
+            eeg) variants=(Eeg) ;;
+            *) echo "Unsupported variant"; exit 2 ;;
+          esac
+
+          tasks=""
+          for variant in "${variants[@]}"; do
+            tasks+=" :app:assemble${variant}${suffix}"
+          done
+          echo "tasks=${tasks# }" >> "$GITHUB_OUTPUT"
+
+      - name: Build APK
+        working-directory: android
+        run: gradle ${{ steps.select.outputs.tasks }} --stacktrace
+
+      - name: Verify research APK signatures
+        if: ${{ inputs.build_type == 'researchRelease' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          apks=(android/app/build/outputs/apk/**/*researchRelease*.apk)
+          [ "${#apks[@]}" -gt 0 ] || {
+            echo "::error::No researchRelease APK files found."
+            exit 3
+          }
+          for apk in "${apks[@]}"; do
+            "${ANDROID_HOME}/build-tools/$(ls "${ANDROID_HOME}/build-tools" | sort -V | tail -1)/apksigner" verify --verbose --print-certs "$apk"
+          done
+
+      - name: Collect APKs, checksums and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          short_sha="${GITHUB_SHA::8}"
+
+          if [ "${{ inputs.build_type }}" = "debug" ]; then
+            pattern='*-debug.apk'
+            build_label='debug'
+          else
+            pattern='*-researchRelease.apk'
+            build_label='researchRelease'
+          fi
+
+          while IFS= read -r apk; do
+            flavor_dir="$(basename "$(dirname "$(dirname "$apk")")")"
+            flavor="${flavor_dir%ResearchRelease}"
+            flavor="${flavor%Debug}"
+            cp "$apk" "dist/arc-adhd-${flavor}-${build_label}-${short_sha}.apk"
+          done < <(find android/app/build/outputs/apk -type f -name "$pattern" | sort)
+
+          test -n "$(find dist -type f -name '*.apk' -print -quit)"
+
+          cat > dist/BUILD_INFO.txt <<EOF
+          repository=${GITHUB_REPOSITORY}
+          git_sha=${GITHUB_SHA}
+          ref=${GITHUB_REF}
+          requested_variant=${{ inputs.variant }}
+          run_id=${GITHUB_RUN_ID}
+          run_number=${GITHUB_RUN_NUMBER}
+          build_type=${{ inputs.build_type }}
+          version_code=${ARC_ADHD_VERSION_CODE}
+          version_name=${ARC_ADHD_VERSION_NAME}
+          application_id_base=pl.edu.prz.arcadhd
+          participant_ready=false
+          EOF
+
+          if [ "${{ inputs.build_type }}" = "researchRelease" ]; then
+            keytool -list -v               -keystore "$ARC_ADHD_KEYSTORE_PATH"               -alias "$ARC_ADHD_KEY_ALIAS"               -storepass "$ARC_ADHD_STORE_PASSWORD"               -keypass "$ARC_ADHD_KEY_PASSWORD"               | awk '/SHA256:/{print $0}' > dist/SIGNING_CERTIFICATE_SHA256.txt
+
+            keytool -exportcert -rfc               -keystore "$ARC_ADHD_KEYSTORE_PATH"               -alias "$ARC_ADHD_KEY_ALIAS"               -storepass "$ARC_ADHD_STORE_PASSWORD"               -file dist/RESEARCH_SIGNING_CERTIFICATE.pem
+          fi
+
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+          ls -lh dist
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: "arc-adhd-${{ inputs.variant }}-${{ inputs.build_type }}-${{ github.run_number }}"
+          path: |
+            dist/*.apk
+            dist/SHA256SUMS.txt
+            dist/BUILD_INFO.txt
+            dist/SIGNING_CERTIFICATE_SHA256.txt
+            dist/RESEARCH_SIGNING_CERTIFICATE.pem
+          if-no-files-found: ignore
+          retention-days: 1
+
+      - name: Publish accepted build as durable prerelease
+        if: ${{ inputs.publish_prerelease && inputs.build_type == 'researchRelease' }}
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: "ARC-ADHD Android ${{ inputs.version_name }} technical prerelease"
+          prerelease: true
+          body: |
+            Technical Android prerelease for repository state ${{ github.sha }}.
+            Build type: researchRelease.
+            Variant: ${{ inputs.variant }}.
+            versionName: ${{ inputs.version_name }}.
+            versionCode: ${{ inputs.version_code }}.
+            participant_ready=false.
+            This release is a durable engineering snapshot, not evidence of clinical efficacy or participant readiness.
+          files: |
+            dist/*.apk
+            dist/SHA256SUMS.txt
+            dist/BUILD_INFO.txt
+            dist/SIGNING_CERTIFICATE_SHA256.txt
+            dist/RESEARCH_SIGNING_CERTIFICATE.pem
+
+      - name: Delete transient Actions artifact after prerelease
+        if: ${{ success() && inputs.publish_prerelease && inputs.build_type == 'researchRelease' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --paginate \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.workflow_run.id == ${{ github.run_id }}) | .id' \
+          | while read -r artifact_id; do
+              [ -z "$artifact_id" ] && continue
+              gh api --method DELETE \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "repos/${GITHUB_REPOSITORY}/actions/artifacts/$artifact_id"
+            done
+
+      - name: Remove signing material
+        if: ${{ always() && inputs.build_type == 'researchRelease' }}
+        shell: bash
+        run: |
+          rm -f "${ARC_ADHD_KEYSTORE_PATH:-}"

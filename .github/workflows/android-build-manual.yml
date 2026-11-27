@@ -1,0 +1,101 @@
+name: Build engineering APK and AAB (no publication)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    if: ${{ github.ref == 'refs/heads/main' && !github.event.repository.private }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+      - run: python3 scripts/generate_kotlin_session_graph.py --check
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.6.0'
+          cache-disabled: true
+      - name: Install declared Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          manager="$(command -v sdkmanager || true)"
+          if [[ -z "$manager" ]]; then
+            manager="$(find "$sdk/cmdline-tools" -type f -path '*/bin/sdkmanager' -print 2>/dev/null | sort -V | tail -n 1 || true)"
+          fi
+          if [[ ! -x "$manager" ]]; then
+            echo "::error::Android command-line tools unavailable in $sdk"
+            exit 1
+          fi
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          # API 37 uses the explicit major.minor SDK package identifier.
+          # Keep the declared major API level and select its base minor revision.
+          if [[ ! -f "$sdk/platforms/android-37.0/android.jar" ]]; then
+            "$manager" --sdk_root="$sdk" --list --channel=0 > "$RUNNER_TEMP/android-sdk-packages.txt"
+            grep -E 'platforms;android-|build-tools;' "$RUNNER_TEMP/android-sdk-packages.txt" || true
+            "$manager" --sdk_root="$sdk" --channel=0 "platforms;android-37.0"
+          fi
+          test -s "$sdk/platforms/android-37.0/android.jar"
+      - name: Fetch pinned LIB-ADAPT
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: MatPomGit/lib-adapt
+          ref: dc1602097b4feaf5f9cf9b103a18013ab787c746
+          path: android/.dependencies/lib-adapt
+          persist-credentials: false
+      - name: Verify and build pinned LIB-ADAPT
+        working-directory: android/.dependencies/lib-adapt
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "dc1602097b4feaf5f9cf9b103a18013ab787c746"
+          gradle --no-daemon test publishMavenJavaPublicationToBuildRepository
+          test -s build/repository/org/matpomgit/lib-adapt/0.1.0/lib-adapt-0.1.0.jar
+      - name: Fetch pinned LIB-AUDIO
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: MatPomGit/lib-audio
+          ref: 2d2f9c794ac2393f698ad88ba26a89e7e1d3e6a3
+          path: android/.dependencies/lib-audio
+          persist-credentials: false
+      - name: Verify and build pinned LIB-AUDIO
+        working-directory: android/.dependencies/lib-audio
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "2d2f9c794ac2393f698ad88ba26a89e7e1d3e6a3"
+          gradle --no-daemon test publishMavenJavaPublicationToBuildRepository
+          test -s build/repository/org/matpomgit/lib-audio-stereo/0.1.0/lib-audio-stereo-0.1.0.jar
+      - name: Build debug packages only
+        working-directory: android
+        run: |
+          gradle --no-daemon :app:assembleCoreDebug :app:assembleFacialDebug :app:assembleBilateralDebug :app:assembleEmbodiedArDebug :app:assembleEegDebug :app:bundleCoreDebug :app:bundleFacialDebug :app:bundleBilateralDebug :app:bundleEmbodiedArDebug :app:bundleEegDebug
+      - name: Check packages and record local checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/engineering
+          for flavor in core facial bilateral embodiedAr eeg; do
+            for ext in apk aab; do
+              mapfile -t files < <(find android/app/build/outputs -type f -iname "*${flavor}*debug*.${ext}" | sort)
+              test "${#files[@]}" -eq 1
+              cp "${files[0]}" "build/engineering/${flavor}.${ext}"
+            done
+          done
+          (cd build/engineering && sha256sum *.apk *.aab > SHA256SUMS)
+          printf '%s\n' "$GITHUB_SHA" > build/engineering/COMMIT
+      - name: Record engineering-only artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: engineering-debug-packages
+          path: build/engineering/
+          retention-days: 1
+          if-no-files-found: error
