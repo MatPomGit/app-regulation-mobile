@@ -38,3 +38,5 @@ node_modules/
 local.properties
 *.jks
 *.keystore
+
+/android/.dependencies/
