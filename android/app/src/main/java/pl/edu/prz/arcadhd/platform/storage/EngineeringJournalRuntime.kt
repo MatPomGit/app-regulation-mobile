@@ -10,7 +10,7 @@ import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.Executors
 import pl.edu.prz.arcadhd.measurement.ChallengeEligibilityDecision
-import pl.edu.prz.arcadhd.measurement.RecoveryMonitorConfig
+import pl.edu.prz.arcadhd.measurement.phase0SyntheticMonitorConfig
 import pl.edu.prz.arcadhd.session.CoreCycleCoordinator
 import pl.edu.prz.arcadhd.session.CoreCycleDecision
 import pl.edu.prz.arcadhd.session.CoreCycleSnapshot
@@ -237,7 +237,7 @@ object EngineeringJournalRuntime {
                 val monitoring = CoreCycleCoordinator.strategyComplete(
                     core,
                     context,
-                    RecoveryMonitorConfig.phase0Synthetic(),
+                    phase0SyntheticMonitorConfig(),
                     timestamp,
                 )
                 if (monitoring.rejection != null) {

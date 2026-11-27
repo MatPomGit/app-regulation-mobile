@@ -50,6 +50,20 @@ jobs:
             "$manager" --sdk_root="$sdk" --channel=0 "platforms;android-37.0"
           fi
           test -s "$sdk/platforms/android-37.0/android.jar"
+      - name: Fetch pinned LIB-ADAPT
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: MatPomGit/lib-adapt
+          ref: dc1602097b4feaf5f9cf9b103a18013ab787c746
+          path: android/.dependencies/lib-adapt
+          persist-credentials: false
+      - name: Verify and build pinned LIB-ADAPT
+        working-directory: android/.dependencies/lib-adapt
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "dc1602097b4feaf5f9cf9b103a18013ab787c746"
+          gradle --no-daemon test publishMavenJavaPublicationToBuildRepository
+          test -s build/repository/org/matpomgit/lib-adapt/0.1.0/lib-adapt-0.1.0.jar
       - name: Test, lint and build five engineering variants
         working-directory: android
         run: |

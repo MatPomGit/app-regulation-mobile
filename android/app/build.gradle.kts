@@ -130,6 +130,7 @@ android {
 }
 
 dependencies {
+    implementation("org.matpomgit:lib-adapt:0.1.0")
     val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)
