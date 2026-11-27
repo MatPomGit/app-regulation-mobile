@@ -1,0 +1,224 @@
+name: Publish ARC-ADHD to Google Play internal testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "Article variant to publish"
+        required: true
+        default: "core"
+        type: choice
+        options:
+          - core
+          - facial
+          - bilateral
+          - embodiedAr
+          - eeg
+          - all
+      release_name:
+        description: "Optional release label (blank = generated)"
+        required: false
+        default: ""
+        type: string
+      changes_not_sent_for_review:
+        description: "Keep Play changes out of review until sent manually"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: google-play-internal-${{ github.ref }}-${{ inputs.variant }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      version_code: ${{ steps.version.outputs.version_code }}
+      version_name: ${{ steps.version.outputs.version_name }}
+    steps:
+      - name: Resolve publication matrix
+        id: matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ inputs.variant }}" in
+            core)
+              matrix='[{"flavor":"core","gradleFlavor":"Core","packageName":"pl.edu.prz.arcadhd.core"}]'
+              ;;
+            facial)
+              matrix='[{"flavor":"facial","gradleFlavor":"Facial","packageName":"pl.edu.prz.arcadhd.facial"}]'
+              ;;
+            bilateral)
+              matrix='[{"flavor":"bilateral","gradleFlavor":"Bilateral","packageName":"pl.edu.prz.arcadhd.bilateral"}]'
+              ;;
+            embodiedAr)
+              matrix='[{"flavor":"embodiedAr","gradleFlavor":"EmbodiedAr","packageName":"pl.edu.prz.arcadhd.ar"}]'
+              ;;
+            eeg)
+              matrix='[{"flavor":"eeg","gradleFlavor":"Eeg","packageName":"pl.edu.prz.arcadhd.eeg"}]'
+              ;;
+            all)
+              matrix='[
+                {"flavor":"core","gradleFlavor":"Core","packageName":"pl.edu.prz.arcadhd.core"},
+                {"flavor":"facial","gradleFlavor":"Facial","packageName":"pl.edu.prz.arcadhd.facial"},
+                {"flavor":"bilateral","gradleFlavor":"Bilateral","packageName":"pl.edu.prz.arcadhd.bilateral"},
+                {"flavor":"embodiedAr","gradleFlavor":"EmbodiedAr","packageName":"pl.edu.prz.arcadhd.ar"},
+                {"flavor":"eeg","gradleFlavor":"Eeg","packageName":"pl.edu.prz.arcadhd.eeg"}
+              ]'
+              matrix="$(echo "$matrix" | tr -d '\n' | tr -s ' ')"
+              ;;
+            *)
+              echo "::error::Unsupported variant"
+              exit 2
+              ;;
+          esac
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Play version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_code=$((260000000 + GITHUB_RUN_NUMBER))
+          if [ -n "${{ inputs.release_name }}" ]; then
+            version_name="${{ inputs.release_name }}"
+          else
+            version_name="0.1.0-research.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+
+  publish:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: google-play-internal
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    env:
+      ARC_ADHD_KEY_ALIAS: ${{ secrets.ARC_ADHD_RESEARCH_KEY_ALIAS }}
+      ARC_ADHD_STORE_PASSWORD: ${{ secrets.ARC_ADHD_RESEARCH_STORE_PASSWORD }}
+      ARC_ADHD_KEY_PASSWORD: ${{ secrets.ARC_ADHD_RESEARCH_KEY_PASSWORD }}
+      ARC_ADHD_VERSION_CODE: ${{ needs.prepare.outputs.version_code }}
+      ARC_ADHD_VERSION_NAME: ${{ needs.prepare.outputs.version_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "9.6.0"
+          cache-provider: basic
+
+      - name: Prepare research signing material
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ARC_ADHD_RESEARCH_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in KEYSTORE_B64 ARC_ADHD_KEY_ALIAS ARC_ADHD_STORE_PASSWORD ARC_ADHD_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing required signing value: $name"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 2
+
+          keystore_path="${RUNNER_TEMP}/arc-adhd-research.jks"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$keystore_path"
+          chmod 600 "$keystore_path"
+          echo "ARC_ADHD_KEYSTORE_PATH=$keystore_path" >> "$GITHUB_ENV"
+
+          keytool -list             -keystore "$keystore_path"             -alias "$ARC_ADHD_KEY_ALIAS"             -storepass "$ARC_ADHD_STORE_PASSWORD"             -keypass "$ARC_ADHD_KEY_PASSWORD" >/dev/null
+
+      - name: Build signed Android App Bundle
+        working-directory: android
+        run: gradle ":app:bundle${{ matrix.gradleFlavor }}ResearchRelease" --stacktrace
+
+      - name: Locate and inspect bundle
+        id: bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle="$(find android/app/build/outputs/bundle -type f -name '*.aab' | head -1)"
+          [ -n "$bundle" ] || {
+            echo "::error::No Android App Bundle was produced."
+            exit 3
+          }
+          echo "path=$bundle" >> "$GITHUB_OUTPUT"
+          echo "Publishing ${{ matrix.packageName }} from $bundle"
+          echo "versionCode=${ARC_ADHD_VERSION_CODE}"
+          echo "versionName=${ARC_ADHD_VERSION_NAME}"
+
+      - name: Authenticate to Google Cloud with Workload Identity Federation
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: arc-adhd-play-2026
+          workload_identity_provider: projects/617172215303/locations/global/workloadIdentityPools/github-actions/providers/github
+          service_account: arc-adhd-play-publisher@arc-adhd-play-2026.iam.gserviceaccount.com
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Publish to Google Play internal testing
+        id: play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
+          packageName: ${{ matrix.packageName }}
+          releaseFiles: ${{ steps.bundle.outputs.path }}
+          tracks: internal
+          status: completed
+          releaseName: ${{ needs.prepare.outputs.version_name }}
+          changesNotSentForReview: ${{ inputs.changes_not_sent_for_review }}
+
+      - name: Write publication record
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          mkdir -p publication
+          cat > "publication/${{ matrix.flavor }}.txt" <<EOF
+          package_name=${{ matrix.packageName }}
+          flavor=${{ matrix.flavor }}
+          track=internal
+          git_sha=${GITHUB_SHA}
+          git_ref=${GITHUB_REF}
+          version_code=${ARC_ADHD_VERSION_CODE}
+          version_name=${ARC_ADHD_VERSION_NAME}
+          run_id=${GITHUB_RUN_ID}
+          changes_not_sent_for_review=${{ inputs.changes_not_sent_for_review }}
+          participant_ready=false
+          EOF
+
+      - name: Upload publication record
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: "google-play-${{ matrix.flavor }}-${{ github.run_number }}"
+          path: publication/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Remove signing material
+        if: ${{ always() }}
+        shell: bash
+        run: rm -f "${ARC_ADHD_KEYSTORE_PATH:-}"

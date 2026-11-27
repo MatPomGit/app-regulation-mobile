@@ -1,0 +1,3 @@
+# Android distribution templates (inactive)
+
+These four historical workflow templates preserve signing, APK/AAB collection and Google Play procedures. They are NOT executable Actions workflows. Paths have been adapted to android/ only. Do not copy them into .github/workflows without independent review: pinned dependency setup, SDK installation, action pinning, input validation, repository permissions, environment protection, identity federation, signing continuity and release-gate evidence must be verified. Secret names are placeholders, not credentials. The separate manual engineering workflow builds debug artifacts only. No GitHub Release, Play upload, signing secrets or participant-ready build is enabled.

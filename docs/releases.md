@@ -51,3 +51,7 @@ Stany `NOT_RUN`, `UNAVAILABLE`, `NOT_APPLICABLE` i `PASS` są różne; każde po
 ## 6. Lista decyzji wydawniczej
 
 Przed wydaniem odpowiedz dowodowo: czy wersja i SHA są zgodne, CI zostało wymuszone, raporty pochodzą z zaufanego procesu, artefakty są podpisane/zweryfikowane, instalacja i kompatybilność rzeczywiście przeszły, dane i licencje są dopuszczone, aktualny runbook i kontakt bezpieczeństwa działają, rollback przetestowano, a właściciel wyraźnie zatwierdził **ten** kanał dystrybucji? Jeśli którekolwiek wymagane kryterium nie jest spełnione, status pozostaje **HOLD**.
+
+## Android migration
+
+Manual engineering builds use `.github/workflows/android-build-manual.yml` (main only, debug APK/AAB, one-day Actions artifacts; no release or store upload). Historical distribution workflows are retained as inactive examples in `release-templates/android/`. They require adaptation and separate approval before activation; no signing credentials are transferred. Previous published artifacts remain unchanged.
