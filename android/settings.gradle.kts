@@ -17,6 +17,15 @@ dependencyResolutionManagement {
             }
             filter { includeModule("org.matpomgit", "lib-adapt") }
         }
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "pinnedAudio"
+                    url = uri(rootDir.resolve(".dependencies/lib-audio/build/repository"))
+                }
+            }
+            filter { includeModule("org.matpomgit", "lib-audio-stereo") }
+        }
         google()
         mavenCentral()
     }

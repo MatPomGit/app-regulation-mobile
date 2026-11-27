@@ -64,6 +64,20 @@ jobs:
           test "$(git rev-parse HEAD)" = "dc1602097b4feaf5f9cf9b103a18013ab787c746"
           gradle --no-daemon test publishMavenJavaPublicationToBuildRepository
           test -s build/repository/org/matpomgit/lib-adapt/0.1.0/lib-adapt-0.1.0.jar
+      - name: Fetch pinned LIB-AUDIO
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: MatPomGit/lib-audio
+          ref: 2d2f9c794ac2393f698ad88ba26a89e7e1d3e6a3
+          path: android/.dependencies/lib-audio
+          persist-credentials: false
+      - name: Verify and build pinned LIB-AUDIO
+        working-directory: android/.dependencies/lib-audio
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "2d2f9c794ac2393f698ad88ba26a89e7e1d3e6a3"
+          gradle --no-daemon test publishMavenJavaPublicationToBuildRepository
+          test -s build/repository/org/matpomgit/lib-audio-stereo/0.1.0/lib-audio-stereo-0.1.0.jar
       - name: Test, lint and build five engineering variants
         working-directory: android
         run: |
